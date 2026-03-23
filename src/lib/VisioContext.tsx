@@ -208,40 +208,41 @@ export function VisioProvider({ children }: { children: ReactNode }) {
       audioCtxRef.current = audioCtx;
 
       const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 512; // 256 bins, each ≈86 Hz
+      analyser.fftSize = 512;
       audioCtx.createMediaStreamSource(stream).connect(analyser);
 
-      const data = new Uint8Array(analyser.frequencyBinCount); // 256 bins
-      const binHz = audioCtx.sampleRate / analyser.fftSize; // ≈86 Hz per bin
-      const lo = Math.round(300 / binHz);  // bin ≈3
-      const hi = Math.round(3000 / binHz); // bin ≈35
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const binHz = audioCtx.sampleRate / analyser.fftSize;
+      const lo = Math.round(300 / binHz);
+      const hi = Math.round(3000 / binHz);
       const bandWidth = hi - lo + 1;
 
       let speechFrames = 0;
+      const SPEECH_THRESHOLD = 18;  // Lower threshold = more sensitive
+      const BARGE_IN_FRAMES = 3;     // Fewer frames needed = faster interrupt
 
       vadTimerRef.current = setInterval(() => {
         if (callStateRef.current !== "active") return;
         analyser.getByteFrequencyData(data);
 
-        // Average amplitude in speech band only
         let sum = 0;
         for (let i = lo; i <= hi; i++) sum += data[i];
         const speechAvg = sum / bandWidth;
         setUserVolume(Math.min(100, speechAvg * 1.8));
 
-        if (speechAvg > 22 && micOnRef.current) {
+        // Aggressive barge-in: interrupt quickly when speech detected
+        if (speechAvg > SPEECH_THRESHOLD && micOnRef.current) {
           speechFrames++;
-          // 5 consecutive frames = 500ms of sustained speech → barge-in
-          if (speechFrames >= 5 && voiceStateRef.current === "ai_speaking" && !bargeInCooldownRef.current) {
+          if (speechFrames >= BARGE_IN_FRAMES && voiceStateRef.current === "ai_speaking" && !bargeInCooldownRef.current) {
             speechFrames = 0;
             bargeInCooldownRef.current = true;
-            setTimeout(() => { bargeInCooldownRef.current = false; }, 1500);
+            setTimeout(() => { bargeInCooldownRef.current = false; }, 800);  // Shorter cooldown
             interruptAI();
           }
         } else {
           speechFrames = 0;
         }
-      }, 100);
+      }, 80);  // Faster polling (80ms instead of 100ms)
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -306,28 +307,69 @@ export function VisioProvider({ children }: { children: ReactNode }) {
 
   // ── TTS ───────────────────────────────────────────────────────────────────────
   const speak = useCallback((text: string) => {
-    if (!speakerOnRef.current) { setVoice("listening"); doStartListening(); return; }
+    if (!speakerOnRef.current) { 
+      setVoice("listening"); 
+      doStartListening(); 
+      return; 
+    }
 
-    window.speechSynthesis.cancel();
+    // Ensure clean text
+    const cleanText = stripActions(text).trim();
+    if (!cleanText) { 
+      setVoice("listening"); 
+      doStartListening(); 
+      return; 
+    }
+
+    // Cancel previous speech
+    try {
+      window.speechSynthesis.cancel();
+    } catch {}
+
     setVoice("ai_speaking");
-    const cleanText = stripActions(text);
-    if (!cleanText.trim()) { setVoice("listening"); doStartListening(); return; }
 
     const doSpeak = () => {
-      const utter = new SpeechSynthesisUtterance(cleanText);
-      utter.lang = "fr-FR";
-      utter.rate = 0.9;
-      utter.pitch = 0.97;
-      utter.volume = 1.0;
-      if (!bestVoiceRef.current) bestVoiceRef.current = getBestVoice();
-      if (bestVoiceRef.current) utter.voice = bestVoiceRef.current;
-      utter.onend = () => { if (voiceStateRef.current === "ai_speaking") { setVoice("listening"); doStartListening(); } };
-      utter.onerror = () => { if (voiceStateRef.current === "ai_speaking") { setVoice("listening"); doStartListening(); } };
-      window.speechSynthesis.speak(utter);
+      try {
+        const utter = new SpeechSynthesisUtterance(cleanText);
+        utter.lang = "fr-FR";
+        utter.rate = 0.95;  // Slightly faster
+        utter.pitch = 1.0;   // Natural pitch
+        utter.volume = 1.0;
+        
+        if (!bestVoiceRef.current) {
+          bestVoiceRef.current = getBestVoice();
+        }
+        if (bestVoiceRef.current) {
+          utter.voice = bestVoiceRef.current;
+        }
+
+        const handleEnd = () => {
+          if (voiceStateRef.current === "ai_speaking") {
+            setVoice("listening");
+            doStartListening();
+          }
+        };
+
+        utter.onend = handleEnd;
+        utter.onerror = (e) => {
+          console.error("TTS Error:", e.error);
+          handleEnd();
+        };
+
+        window.speechSynthesis.speak(utter);
+      } catch (err) {
+        console.error("Speak error:", err);
+        setVoice("listening");
+        doStartListening();
+      }
     };
 
+    // Get voices if not loaded
     if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; doSpeak(); };
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        doSpeak();
+      };
     } else {
       doSpeak();
     }

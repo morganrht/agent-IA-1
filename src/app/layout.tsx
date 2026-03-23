@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { VisioProvider } from "@/lib/VisioContext";
 
 export const metadata: Metadata = {
   title: "Agent Pro — Morgan",
-  description: "Ton agent personnel & professionnel",
+  description: "Ton assistant personnel & professionnel",
   manifest: "/manifest.json",
 };
 
@@ -20,7 +21,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className="h-full">
-      <body className="h-full">{children}</body>
+      <body className="h-full">
+        <VisioProvider>
+          {children}
+        </VisioProvider>
+      </body>
     </html>
   );
 }

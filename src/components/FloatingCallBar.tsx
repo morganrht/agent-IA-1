@@ -18,7 +18,7 @@ export default function FloatingCallBar() {
     <>
       {/* Action toasts (show on all pages when in call) */}
       {isActive && toasts.length > 0 && (
-        <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
           {toasts.map((t) => (
             <div key={t.id} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-white"
               style={{ background: t.type === "note" ? "rgba(108,99,255,0.95)" : t.type === "mail" ? "rgba(234,67,53,0.95)" : "rgba(34,197,94,0.95)", boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}>
@@ -32,7 +32,7 @@ export default function FloatingCallBar() {
       {/* Floating call bar — only when active and NOT on the visio page */}
       {isActive && !isOnVisioPage && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[90] flex items-center gap-3 px-4 py-3 rounded-2xl"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-3 rounded-2xl"
           style={{ background: "rgba(10,8,20,0.95)", border: "1px solid rgba(108,99,255,0.5)", backdropFilter: "blur(20px)", boxShadow: "0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(108,99,255,0.2)" }}>
 
           {/* Pulse indicator */}

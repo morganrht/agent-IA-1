@@ -88,7 +88,7 @@ export default function Sidebar() {
             style={{ background: "var(--success)", boxShadow: "0 0 6px var(--success)" }}
           />
           <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Agent en ligne · Llama 3.3
+            Agent en ligne · Mistral + Claude
           </span>
         </div>
       </div>

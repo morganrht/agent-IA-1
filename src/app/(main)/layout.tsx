@@ -2,11 +2,10 @@
 
 import Sidebar from "@/components/Sidebar";
 import FloatingCallBar from "@/components/FloatingCallBar";
-import { VisioProvider } from "@/lib/VisioContext";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <VisioProvider>
+    <>
       <div className="h-full flex">
         <Sidebar />
         <main
@@ -17,6 +16,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </main>
       </div>
       <FloatingCallBar />
-    </VisioProvider>
+    </>
   );
 }
