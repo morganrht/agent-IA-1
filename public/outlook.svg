@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <!-- Envelope back -->
+  <rect x="18" y="12" width="28" height="22" rx="2" fill="#0078D4"/>
+  <!-- Envelope flap lines -->
+  <polygon points="18,12 32,24 46,12" fill="#28A8E8"/>
+  <polygon points="18,34 26,26 18,20" fill="#50D9FF" opacity="0.6"/>
+  <polygon points="46,34 38,26 46,20" fill="#0058A0" opacity="0.6"/>
+  <!-- O badge -->
+  <rect x="4" y="16" width="22" height="22" rx="4" fill="#0078D4"/>
+  <text x="15" y="32" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">O</text>
+</svg>
