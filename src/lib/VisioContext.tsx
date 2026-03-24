@@ -82,17 +82,21 @@ function getBestVoice(): SpeechSynthesisVoice | null {
 type AiAction =
   | { type: "SEND_EMAIL"; to: string; subject: string; body: string }
   | { type: "CREATE_NOTE"; title: string; content: string }
+  | { type: "UPDATE_NOTE"; id: string; title?: string; content?: string }
+  | { type: "DELETE_NOTE"; id: string }
   | { type: "ADD_EVENT"; title: string; date: string; time: string; endTime: string; location?: string };
 
 function parseActions(text: string): AiAction[] {
   const out: AiAction[] = [];
-  const re = /ACTION:(SEND_EMAIL|CREATE_NOTE|ADD_EVENT):(\{[^}]+\})/g;
+  const re = /ACTION:(SEND_EMAIL|CREATE_NOTE|UPDATE_NOTE|DELETE_NOTE|ADD_EVENT):(\{[^}]+\})/g;
   let m;
   while ((m = re.exec(text)) !== null) {
     try {
       const d = JSON.parse(m[2]);
       if (m[1] === "SEND_EMAIL") out.push({ type: "SEND_EMAIL", ...d });
       else if (m[1] === "CREATE_NOTE") out.push({ type: "CREATE_NOTE", ...d });
+      else if (m[1] === "UPDATE_NOTE") out.push({ type: "UPDATE_NOTE", ...d });
+      else if (m[1] === "DELETE_NOTE") out.push({ type: "DELETE_NOTE", ...d });
       else if (m[1] === "ADD_EVENT") out.push({ type: "ADD_EVENT", ...d });
     } catch {}
   }
@@ -107,7 +111,7 @@ function stripActions(t: string) {
 
 // ── Provider ───────────────────────────────────────────────────────────────────
 export function VisioProvider({ children }: { children: ReactNode }) {
-  const { notes, createNote, updateNote, setDraftEmail } = useStore();
+  const { notes, createNote, updateNote, deleteNote, setDraftEmail } = useStore();
 
   const [callState, setCallState] = useState<CallState>("idle");
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
