@@ -384,7 +384,18 @@ export function VisioProvider({ children }: { children: ReactNode }) {
           updateNote(note.id, "title", a.title || "Note vocale");
           updateNote(note.id, "content", `# ${a.title || "Note vocale"}\n\n${a.content || ""}`);
         }, 50);
-        addToast("note", `Note créée : "${a.title}"`);
+        addToast("note", `Note créée : \"${a.title}\"`);
+      } else if (a.type === "UPDATE_NOTE") {
+        if (a.id && (a.title || a.content)) {
+          if (a.title) updateNote(a.id, "title", a.title);
+          if (a.content) updateNote(a.id, "content", a.content);
+          addToast("note", `Note modifiée : \"${a.title || a.id}\"`);
+        }
+      } else if (a.type === "DELETE_NOTE") {
+        if (a.id) {
+          deleteNote(a.id);
+          addToast("note", `Note supprimée : \"${a.id}\"`);
+        }
       } else if (a.type === "SEND_EMAIL") {
         setPendingEmailDraft({ to: a.to, subject: a.subject, body: a.body });
       } else if (a.type === "ADD_EVENT") {
@@ -400,11 +411,11 @@ export function VisioProvider({ children }: { children: ReactNode }) {
               end: { dateTime: `${a.date}T${a.endTime}:00`, timeZone: tz },
             }),
           });
-          addToast("event", `Événement créé : "${a.title}"`);
+          addToast("event", `Événement créé : \"${a.title}\"`);
         } catch {}
       }
     }
-  }, [createNote, updateNote, addToast]);
+  }, [createNote, updateNote, deleteNote, addToast]);
 
   // ── Capture screen frame for AI analysis ──────────────────────────────────────
   const captureScreenFrame = useCallback(async (): Promise<string | null> => {
